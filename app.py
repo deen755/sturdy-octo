@@ -221,7 +221,7 @@ def apply_dual_state_machine(df, inject_disaster=False, static_threshold=-2.0, r
     df_mod['system_state'] = states
     return df_mod
 
-# --- Helper: Render Real Magnetometer + Fallback Manual Compass ---
+# --- Helper: Render Real Magnetometer + Dynamic Moving Compass ---
 def render_compass_component(base_heading):
     compass_html = f"""
     <!DOCTYPE html>
@@ -262,6 +262,7 @@ def render_compass_component(base_heading):
                 height: 210px;
                 margin: 12px 0;
                 cursor: grab;
+                touch-action: none;
             }}
             .compass-container:active {{
                 cursor: grabbing;
@@ -274,7 +275,7 @@ def render_compass_component(base_heading):
                 border: 4px solid #FF0055;
                 background: radial-gradient(circle, rgba(17,24,39,0.95) 0%, rgba(11,15,25,1) 100%);
                 position: relative;
-                transition: transform 0.1s cubic-bezier(0.1, 0.8, 0.3, 1);
+                transition: transform 0.08s ease-out;
                 box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
             }}
 
@@ -351,7 +352,7 @@ def render_compass_component(base_heading):
     <body>
 
         <h3 style="margin: 0; color: #FF0055;">🧭 MAGNETOMETER COMPASS</h3>
-        <div id="sensorStatusBadge" class="badge badge-manual">📡 Laptop/Manual Dial Mode</div>
+        <div id="sensorStatusBadge" class="badge badge-manual">📡 Manual / Laptop Interactive Mode</div>
 
         <div class="compass-container" id="compassContainer">
             <div class="compass-dial" id="compassDial">
@@ -368,7 +369,7 @@ def render_compass_component(base_heading):
         <button class="ctrl-btn" id="sensorBtn" onclick="requestSensorPermission()">📡 Enable Hardware Magnetometer</button>
 
         <div class="manual-controls">
-            <span style="font-size: 0.75rem; opacity: 0.8;">Manual Dial Adjustment (Mouse/Touch Drag):</span>
+            <span style="font-size: 0.75rem; opacity: 0.8;">Manual Dial Adjustment (Drag Dial or Use Slider):</span>
             <input type="range" min="0" max="360" value="{base_heading}" class="slider-heading" id="headingSlider" oninput="onSliderMove(this.value)">
         </div>
 
@@ -401,7 +402,7 @@ def render_compass_component(base_heading):
             function renderHeading(deg) {{
                 var norm = (deg % 360 + 360) % 360;
                 var rounded = Math.round(norm);
-                dial.style.transform = 'rotate(' + (-deg) + 'deg)';
+                dial.style.transform = 'rotate(' + (-rounded) + 'deg)';
                 label.innerText = "HEADING: " + rounded + "° (" + getDirectionLabel(rounded) + ")";
                 slider.value = rounded;
             }}
@@ -412,39 +413,61 @@ def render_compass_component(base_heading):
                 renderHeading(currentHeading);
             }}
 
-            // Mouse / Touch Dragging Simulation for Non-Sensor Hardware (Laptops)
+            // Rotational Drag Handling using Angular Calculations
             var isDragging = false;
-            var startX = 0;
+
+            function calculateAngle(e) {{
+                var rect = container.getBoundingClientRect();
+                var centerX = rect.left + rect.width / 2;
+                var centerY = rect.top + rect.height / 2;
+                var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                var radians = Math.atan2(clientX - centerX, -(clientY - centerY));
+                var degrees = radians * (180 / Math.PI);
+                return (degrees + 360) % 360;
+            }}
 
             container.addEventListener('mousedown', function(e) {{
                 if (isHardwareActive) return;
                 isDragging = true;
-                startX = e.clientX;
-            }});
-
-            window.addEventListener('mousemove', function(e) {{
-                if (!isDragging || isHardwareActive) return;
-                var deltaX = e.clientX - startX;
-                startX = e.clientX;
-                currentHeading = (currentHeading + deltaX * 0.5) % 360;
+                currentHeading = calculateAngle(e);
                 renderHeading(currentHeading);
             }});
 
-            window.addEventListener('mouseup', function() {{ isDragging = false; }});
+            container.addEventListener('touchstart', function(e) {{
+                if (isHardwareActive) return;
+                isDragging = true;
+                currentHeading = calculateAngle(e);
+                renderHeading(currentHeading);
+            }}, {{ passive: true }});
 
-            // Hardware Orientation Listener (Magnetometer / Gyroscope)
+            window.addEventListener('mousemove', function(e) {{
+                if (!isDragging || isHardwareActive) return;
+                currentHeading = calculateAngle(e);
+                renderHeading(currentHeading);
+            }});
+
+            window.addEventListener('touchmove', function(e) {{
+                if (!isDragging || isHardwareActive) return;
+                currentHeading = calculateAngle(e);
+                renderHeading(currentHeading);
+            }}, {{ passive: true }});
+
+            window.addEventListener('mouseup', function() {{ isDragging = false; }});
+            window.addEventListener('touchend', function() {{ isDragging = false; }});
+
+            // Hardware Orientation Listener
             function handleOrientation(event) {{
                 var compassHeading = null;
 
                 if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {{
-                    // iOS Devices
                     compassHeading = event.webkitCompassHeading;
                 }} else if (event.alpha !== null) {{
-                    // Android & standard HTML5 Magnetometer / Gyroscope
                     compassHeading = (360 - event.alpha) % 360;
                 }}
 
-                if (compassHeading !== null) {{
+                if (compassHeading !== null && compassHeading !== undefined) {{
                     isHardwareActive = true;
                     badge.innerText = "⚡ REAL MAGNETOMETER ACTIVE";
                     badge.className = "badge badge-live";
@@ -459,18 +482,17 @@ def render_compass_component(base_heading):
                         if (response === 'granted') {{
                             window.addEventListener('deviceorientation', handleOrientation, true);
                         }} else {{
-                            alert('Sensor permission denied. Using manual/drag mode.');
+                            alert('Sensor permission denied. Using manual/interactive drag mode.');
                         }}
                     }}).catch(console.error);
                 }} else if ('DeviceOrientationEvent' in window) {{
                     window.addEventListener('deviceorientationabsolute', handleOrientation, true);
                     window.addEventListener('deviceorientation', handleOrientation, true);
                 }} else {{
-                    alert('Magnetometer sensor unavailable on this device (Standard for Laptops). Use the slider or drag the dial.');
+                    alert('Magnetometer sensor unavailable on this device. You can rotate the dial by dragging it directly or using the slider.');
                 }}
             }}
 
-            // Auto-detect if device naturally emits orientation on load
             window.addEventListener('deviceorientation', function(e) {{
                 if (e.alpha !== null || e.webkitCompassHeading !== undefined) {{
                     handleOrientation(e);
