@@ -1,6 +1,7 @@
 streamlit
+scikit-learn
 pandas
 numpy
 requests
-scikit-learn
 plotly
+google-genai
