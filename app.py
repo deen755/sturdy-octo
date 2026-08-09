@@ -56,15 +56,9 @@ else:
     toggle_border = "#0284C7"
     toggle_icon = "🌙"
 
-# Inject Global Adaptive CSS with Fixed Header
+# Inject Global Adaptive CSS
 st.markdown(f"""
     <style>
-        /* Hide Default Streamlit Header padding */
-        .block-container {{
-            padding-top: 5rem !important;
-            padding-bottom: 2rem !important;
-        }}
-
         .stApp {{
             background-color: {bg_color};
             color: {text_color} !important;
@@ -72,22 +66,6 @@ st.markdown(f"""
         
         h1, h2, h3, h4, h5, h6, p, label, span, div {{
             color: {text_color} !important;
-        }}
-
-        /* Attached Header Bar */
-        .fixed-header-container {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 99999;
-            background-color: {card_bg};
-            border-bottom: 1px solid rgba(0, 240, 255, 0.2);
-            padding: 12px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
         }}
 
         /* Hero Banner */
@@ -114,29 +92,19 @@ st.markdown(f"""
             color: #FFFFFF !important;
         }}
 
-        /* Theme Toggle Button */
-        div[data-testid="stColumn"]:nth-child(2) button[key="btn_theme_toggle_header"] {{
-            width: 44px !important;
-            height: 44px !important;
+        /* Clean Styled Toggle Button */
+        div.stButton > button[key="btn_theme_toggle_header"] {{
             border-radius: 50% !important;
             background-color: {toggle_bg} !important;
             border: 2px solid {toggle_border} !important;
             font-size: 1.3rem !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 0 !important;
-            margin-left: auto !important;
             box-shadow: 0 0 10px {toggle_border}40 !important;
             transition: all 0.2s ease-in-out !important;
-        }}
-        
-        div[data-testid="stColumn"]:nth-child(2) button[key="btn_theme_toggle_header"]:hover {{
-            transform: scale(1.08) !important;
-            box-shadow: 0 0 16px {toggle_border} !important;
+            height: 42px !important;
+            width: 42px !important;
         }}
 
-        /* Universal Buttons */
+        /* Universal Nav/Action Buttons */
         div.stButton > button {{
             background-color: {card_bg} !important;
             color: {text_color} !important;
@@ -160,8 +128,8 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- Top Attached Header Bar ---
-header_col1, header_col2 = st.columns([5, 1])
+# --- Top Header Row ---
+header_col1, header_col2 = st.columns([6, 1])
 with header_col1:
     st.markdown(f"<h2 style='margin: 0; color: {accent_aqua}; font-weight: 800;'>⚡ AtmoSync EN</h2>", unsafe_allow_html=True)
 with header_col2:
@@ -530,7 +498,7 @@ def render_compass_component(base_heading):
 # -----------------------------------------------------------------------------
 # TAB 1: HOME
 # -----------------------------------------------------------------------------
-if selected_tab == "Home":
+if selected_tab == "🏠 Home":
     col_a, col_b = st.columns([2, 1])
     with col_a:
         st.markdown(f"<h3 style='color: {accent_aqua}; margin-top:0;'>Why AtmoSync EN?</h3>", unsafe_allow_html=True)
@@ -568,8 +536,8 @@ if selected_tab == "Home":
 # -----------------------------------------------------------------------------
 # TAB 2: LIVE WEATHER & GPS MAP
 # -----------------------------------------------------------------------------
-elif selected_tab == "Live Weather & GPS Map":
-    st.title("Live Atmospheric Telemetry & GPS Station")
+elif selected_tab == "📡 Live Weather & GPS Map":
+    st.title("📡 Live Atmospheric Telemetry & GPS Station")
     
     c1, c2, c3 = st.columns([1, 2, 1])
     with c1:
@@ -728,17 +696,17 @@ elif selected_tab == "Live Weather & GPS Map":
 # -----------------------------------------------------------------------------
 # TAB 3: COMPASS NAVIGATION
 # -----------------------------------------------------------------------------
-elif selected_tab == "Compass":
-    st.title("Dedicated Emergency Compass Navigation")
+elif selected_tab == "🧭 Compass":
+    st.title("🧭 Dedicated Emergency Compass Navigation")
     st.write("Real-time magnetometer orientation telemetries (mobile devices) or manual dial/slider interaction (laptops).")
     
     col_c1, col_c2 = st.columns([1, 2])
     with col_c1:
-        st.subheader("Directional Controls")
+        st.subheader("⚙️ Directional Controls")
         heading_angle = st.slider("Set Baseline Heading (°)", 0, 360, 42, step=1, key="standalone_compass_slider")
         
         st.markdown("---")
-        st.subheader(" Evacuation Vectors")
+        st.subheader("📍 Evacuation Vectors")
         st.metric("Primary Shelter Target", "42° NE", "1.8 km distance")
         st.metric("High-Ground Altitude Target", "128° SE", "+240m elevation")
         st.metric("Medical Relay Node", "295° NW", "0.9 km distance")
@@ -749,8 +717,8 @@ elif selected_tab == "Compass":
 # -----------------------------------------------------------------------------
 # TAB 4: ACTIVE LOG
 # -----------------------------------------------------------------------------
-elif selected_tab == "Active Log":
-    st.title("Telemetry Event & Anomaly Log")
+elif selected_tab == "📋 Active Log":
+    st.title("📋 Telemetry Event & Anomaly Log")
     df_raw = fetch_pressure_data(st.session_state.lat, st.session_state.lon)
     if df_raw is not None:
         df_proc = apply_dual_state_machine(df_raw, inject_disaster=st.session_state.disaster_mode_sim)
