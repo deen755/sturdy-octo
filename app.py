@@ -9,7 +9,7 @@ from plotly.subplots import make_subplots
 import streamlit.components.v1 as components
 
 # --- Page Configuration ---
-st.set_page_config(page_title="AtmoSync Emergency Network", layout="wide")
+st.set_page_config(page_title="AtmoSync Emergency Network", layout="wide", initial_sidebar_state="collapsed")
 
 # --- Helper: IP/GPS Location Lookup ---
 def get_user_location():
@@ -43,7 +43,7 @@ if st.session_state.dark_mode:
     text_color = "#FFFFFF"
     accent_aqua = "#00F0FF"
     plot_template = "plotly_dark"
-    toggle_bg = "#1F2937"
+    toggle_bg = "#111827"
     toggle_border = "#00F0FF"
     toggle_icon = "☀️"
 else:
@@ -52,22 +52,19 @@ else:
     text_color = "#0F172A"
     accent_aqua = "#0284C7"
     plot_template = "plotly_white"
-    toggle_bg = "#FFF3E0"
-    toggle_border = "#FF9800"
+    toggle_bg = "#FFFFFF"
+    toggle_border = "#0284C7"
     toggle_icon = "🌙"
 
-# --- Top Header & Adaptive Theme Toggle Button ---
-header_col1, header_col2 = st.columns([5, 1])
-with header_col1:
-    st.markdown(f"<h2 style='margin: 0; color: {accent_aqua}; font-weight: 800;'>⚡ AtmoSync EN</h2>", unsafe_allow_html=True)
-with header_col2:
-    if st.button(toggle_icon, key="btn_theme_toggle_header", help="Toggle Light/Dark Theme"):
-        st.session_state.dark_mode = not st.session_state.dark_mode
-        st.rerun()
-
-# Inject Global Adaptive CSS
+# Inject Global Adaptive CSS with Fixed Header
 st.markdown(f"""
     <style>
+        /* Hide Default Streamlit Header padding */
+        .block-container {{
+            padding-top: 5rem !important;
+            padding-bottom: 2rem !important;
+        }}
+
         .stApp {{
             background-color: {bg_color};
             color: {text_color} !important;
@@ -77,15 +74,31 @@ st.markdown(f"""
             color: {text_color} !important;
         }}
 
+        /* Attached Header Bar */
+        .fixed-header-container {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 99999;
+            background-color: {card_bg};
+            border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }}
+
         /* Hero Banner */
         .hero-banner {{
             background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
-            padding: 20px;
+            padding: 24px;
             border-radius: 12px;
             color: #FFFFFF !important;
             text-align: center;
             margin-top: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             box-shadow: 0 4px 20px rgba(0, 198, 255, 0.3);
         }}
         .slogan-title {{
@@ -101,31 +114,31 @@ st.markdown(f"""
             color: #FFFFFF !important;
         }}
 
-        /* Adaptive Theme Button */
+        /* Theme Toggle Button */
         div[data-testid="stColumn"]:nth-child(2) button[key="btn_theme_toggle_header"] {{
-            width: 48px !important;
-            height: 48px !important;
+            width: 44px !important;
+            height: 44px !important;
             border-radius: 50% !important;
             background-color: {toggle_bg} !important;
             border: 2px solid {toggle_border} !important;
-            font-size: 1.4rem !important;
+            font-size: 1.3rem !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             padding: 0 !important;
             margin-left: auto !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            box-shadow: 0 0 10px {toggle_border}40 !important;
             transition: all 0.2s ease-in-out !important;
         }}
         
         div[data-testid="stColumn"]:nth-child(2) button[key="btn_theme_toggle_header"]:hover {{
-            transform: scale(1.1) !important;
-            box-shadow: 0 0 14px {toggle_border} !important;
+            transform: scale(1.08) !important;
+            box-shadow: 0 0 16px {toggle_border} !important;
         }}
 
         /* Universal Buttons */
         div.stButton > button {{
-            background-color: rgba(255, 255, 255, 0.05) !important;
+            background-color: {card_bg} !important;
             color: {text_color} !important;
             border: 1px solid rgba(0, 240, 255, 0.3) !important;
             border-radius: 8px !important;
@@ -135,7 +148,7 @@ st.markdown(f"""
         }}
 
         div.stButton > button:hover {{
-            background-color: rgba(0, 240, 255, 0.2) !important;
+            background-color: rgba(0, 240, 255, 0.15) !important;
             border-color: {accent_aqua} !important;
             color: {accent_aqua} !important;
         }}
@@ -147,11 +160,20 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
+# --- Top Attached Header Bar ---
+header_col1, header_col2 = st.columns([5, 1])
+with header_col1:
+    st.markdown(f"<h2 style='margin: 0; color: {accent_aqua}; font-weight: 800;'>⚡ AtmoSync EN</h2>", unsafe_allow_html=True)
+with header_col2:
+    if st.button(toggle_icon, key="btn_theme_toggle_header", help="Toggle Light/Dark Theme"):
+        st.session_state.dark_mode = not st.session_state.dark_mode
+        st.rerun()
+
 # --- Hero Banner ---
 st.markdown("""
     <div class="hero-banner">
         <div class="slogan-title">AtmoSync Emergency Network</div>
-        <div class="slogan-sub">⚡ Resilience Redefined — Real-Time Atmospheric Telemetry & Disaster Detection</div>
+        <div class="slogan-sub">⚡ Early Warning System & Off-Grid Emergency Navigation</div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -413,7 +435,6 @@ def render_compass_component(base_heading):
                 renderHeading(currentHeading);
             }}
 
-            // Rotational Drag Handling using Angular Calculations
             var isDragging = false;
 
             function calculateAngle(e) {{
@@ -457,7 +478,6 @@ def render_compass_component(base_heading):
             window.addEventListener('mouseup', function() {{ isDragging = false; }});
             window.addEventListener('touchend', function() {{ isDragging = false; }});
 
-            // Hardware Orientation Listener
             function handleOrientation(event) {{
                 var compassHeading = null;
 
@@ -499,7 +519,6 @@ def render_compass_component(base_heading):
                 }}
             }}, {{ once: true }});
 
-            // Initial render
             renderHeading(currentHeading);
         </script>
 
@@ -511,50 +530,57 @@ def render_compass_component(base_heading):
 # -----------------------------------------------------------------------------
 # TAB 1: HOME
 # -----------------------------------------------------------------------------
-if selected_tab == "🏠 Home":
+if selected_tab == "Home":
     col_a, col_b = st.columns([2, 1])
     with col_a:
-        st.subheader("🌐 Core Architecture & Mission")
+        st.markdown(f"<h3 style='color: {accent_aqua}; margin-top:0;'>Why AtmoSync EN?</h3>", unsafe_allow_html=True)
         st.write("""
-        AtmoSync EN monitors localized barometric pressure trends in real time to detect severe weather drops before disaster strikes.
-        By pairing an **Isolation Forest ML model** with an automated **Dual-State Machine (Nominal ↔ Disaster)**,
-        the system eliminates false alarms while ensuring instantaneous alerting during critical pressure drops.
+        When severe weather hits, cellular towers fail and power grids go down. Standard weather apps stop updating exactly when you need them most.
+        
+        **AtmoSync Emergency Network** acts as your off-grid early warning safety net. By directly monitoring localized atmospheric barometric pressure drops in real time, the app predicts severe incoming storms and flash events before emergency broadcasts even go out.
         """)
         
-        st.subheader("🚨 Survival Engine Control")
+        st.markdown(f"<h3 style='color: {accent_aqua};'>How It Keeps You Safe in a Disaster</h3>", unsafe_allow_html=True)
+        st.write("""
+        * **⚡ Zero-Lag Anomaly Detection:** An integrated Isolation Forest ML engine analyzes pressure drop velocity ($\Delta P / \Delta t$) to instantly flag storm fronts.
+        * **🛡️ Zero False-Alarm State Machine:** Prevents panic alerts by holding a strict dual-state verification loop (Nominal ↔ Disaster).
+        * **🧭 Hardware Survival Override:** The moment a critical pressure crash triggers **Disaster Mode**, the app strips away high-data graphs and instantly locks onto your phone's built-in magnetometer compass to guide you to high-ground evacuation vectors without needing internet access.
+        """)
+
+        st.markdown("---")
+        st.subheader("🚨 Try Disaster Survival Simulation")
         st.session_state.disaster_mode_sim = st.toggle(
-            "🔴 Direct Disaster Mode (Compass Survival Override)", 
+            "🔴 Simulate Disaster State (Lock Compass Override)", 
             value=st.session_state.disaster_mode_sim,
             key="disaster_toggle_home"
         )
         if st.session_state.disaster_mode_sim:
-            st.error("⚠️ **DISASTER SURVIVAL MODE ACTIVE:** Graphs disabled. Interactive survival compass engaged.")
+            st.error("⚠️ **DISASTER MODE ACTIVE:** Dashboard charts hidden. Survival compass initialized.")
         else:
-            st.success("✅ Nominal Mode Active: Baseline telemetry charts loaded.")
+            st.success("✅ Nominal Mode Active: System continuously scanning local atmospheric pressure.")
 
     with col_b:
-        st.subheader("📡 Station Status")
-        st.metric("State Machine Core", "ACTIVE", "Latency < 10ms")
-        st.metric("Survival Engine Mode", "DISASTER MODE" if st.session_state.disaster_mode_sim else "NOMINAL")
-        st.metric("Active Station", st.session_state.city_name)
+        st.subheader("📡 System Status")
+        st.metric("Detection Core", "ACTIVE", "Latency < 10ms")
+        st.metric("Current Mode", "DISASTER MODE" if st.session_state.disaster_mode_sim else "NOMINAL")
+        st.metric("Detected Location", st.session_state.city_name)
 
 # -----------------------------------------------------------------------------
 # TAB 2: LIVE WEATHER & GPS MAP
 # -----------------------------------------------------------------------------
-elif selected_tab == "📡 Live Weather & GPS Map":
-    st.title("📡 Live Atmospheric Telemetry & GPS Station")
+elif selected_tab == "Live Weather & GPS Map":
+    st.title("Live Atmospheric Telemetry & GPS Station")
     
-    # Navigation & Disaster Mode Controls
     c1, c2, c3 = st.columns([1, 2, 1])
     with c1:
-        if st.button("📍 Refresh Station GPS", key="btn_refresh_location_map"):
+        if st.button("📍 Refresh Location", key="btn_refresh_location_map"):
             lat, lon, city = get_user_location()
             st.session_state.lat, st.session_state.lon, st.session_state.city_name = lat, lon, city
             st.success(f"Located: {city}")
             st.rerun()
     with c2:
         preset_city = st.selectbox(
-            "Choose Station Location Preset", 
+            "Station Location Presets", 
             ["Current Live Location", "Miami (Storm Zone)", "Reykjavik (High Delta)", "Tokyo", "London"],
             key="preset_city_select"
         )
@@ -576,33 +602,30 @@ elif selected_tab == "📡 Live Weather & GPS Map":
             key="disaster_toggle_map"
         )
 
-    # Fetch Telemetry
     df_raw = fetch_pressure_data(st.session_state.lat, st.session_state.lon)
     if df_raw is not None:
         df_proc = apply_dual_state_machine(df_raw, inject_disaster=st.session_state.disaster_mode_sim)
         latest_state = df_proc['system_state'].iloc[-1]
 
-        # DISASTER MODE: INTERACTIVE CONTROLLED COMPASS
         if latest_state == 'DISASTER' or st.session_state.disaster_mode_sim:
             st.error(f"🚨 CRITICAL ALARM: DISASTER SURVIVAL MODE ENGAGED FOR {st.session_state.city_name.upper()}")
             
-            heading_angle = st.slider("🧭 Set Baseline Center Heading (°)", 0, 360, 42, step=1, key="compass_angle_slider")
+            heading_angle = st.slider("🧭 Set Center Heading (°)", 0, 360, 42, step=1, key="compass_angle_slider")
             render_compass_component(heading_angle)
 
             surv_c1, surv_c2, surv_c3 = st.columns(3)
-            surv_c1.metric("Emergency Evac Vector", "42° NE", "Safe Altitude: +120m")
-            surv_c2.metric("Barometric Drop Rate", f"{df_proc['dp_dt'].iloc[-1]:.2f} mbar/h", "CRITICAL")
-            surv_c3.metric("Emergency Beacon Signal", "BROADCASTING", "Frequency 433 MHz")
+            surv_c1.metric("Evac Vector", "42° NE", "Target: +120m")
+            surv_c2.metric("Pressure Drop Rate", f"{df_proc['dp_dt'].iloc[-1]:.2f} mbar/h", "CRITICAL")
+            surv_c3.metric("Beacon Frequency", "433 MHz", "Broadcasting")
             
         else:
-            # NOMINAL MODE: standard charts and metrics
             st.success(f"✅ NOMINAL MONITORING MODE: {st.session_state.city_name}")
 
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Current Location", st.session_state.city_name)
+            m1.metric("Station City", st.session_state.city_name)
             m2.metric("Barometric Pressure", f"{df_proc['p (mbar)'].iloc[-1]:.2f} mbar")
-            m3.metric("3-Hour ΔP Drop", f"{df_proc['delta_p_3h'].iloc[-1]:.2f} mbar")
-            m4.metric("Disaster Events (7 Days)", (df_proc['system_state'] == 'DISASTER').sum())
+            m3.metric("3-Hour Pressure Drop", f"{df_proc['delta_p_3h'].iloc[-1]:.2f} mbar")
+            m4.metric("Anomalies (7 Days)", (df_proc['system_state'] == 'DISASTER').sum())
 
             st.markdown("---")
 
@@ -619,8 +642,7 @@ elif selected_tab == "📡 Live Weather & GPS Map":
 
         st.markdown("---")
 
-        # --- Live GPS Map Container ---
-        st.subheader("🗺️ Emergency Navigation Station Map")
+        st.subheader("🗺️ Emergency Navigation Map")
         cur_lat = st.session_state.lat
         cur_lon = st.session_state.lon
         city_name = st.session_state.city_name
@@ -706,19 +728,19 @@ elif selected_tab == "📡 Live Weather & GPS Map":
 # -----------------------------------------------------------------------------
 # TAB 3: COMPASS NAVIGATION
 # -----------------------------------------------------------------------------
-elif selected_tab == "🧭 Compass":
-    st.title("🧭 Dedicated Emergency Compass Navigation")
+elif selected_tab == "Compass":
+    st.title("Dedicated Emergency Compass Navigation")
     st.write("Real-time magnetometer orientation telemetries (mobile devices) or manual dial/slider interaction (laptops).")
     
     col_c1, col_c2 = st.columns([1, 2])
     with col_c1:
-        st.subheader("⚙️ Directional Controls")
+        st.subheader("Directional Controls")
         heading_angle = st.slider("Set Baseline Heading (°)", 0, 360, 42, step=1, key="standalone_compass_slider")
         
         st.markdown("---")
-        st.subheader("📍 Waypoint Vectors")
-        st.metric("Primary Evacuation Zone", "42° NE", "1.8 km target")
-        st.metric("High-Ground Shelter", "128° SE", "+240m elevation")
+        st.subheader(" Evacuation Vectors")
+        st.metric("Primary Shelter Target", "42° NE", "1.8 km distance")
+        st.metric("High-Ground Altitude Target", "128° SE", "+240m elevation")
         st.metric("Medical Relay Node", "295° NW", "0.9 km distance")
 
     with col_c2:
@@ -727,8 +749,8 @@ elif selected_tab == "🧭 Compass":
 # -----------------------------------------------------------------------------
 # TAB 4: ACTIVE LOG
 # -----------------------------------------------------------------------------
-elif selected_tab == "📋 Active Log":
-    st.title("📋 Telemetry Event & Anomaly Log")
+elif selected_tab == "Active Log":
+    st.title("Telemetry Event & Anomaly Log")
     df_raw = fetch_pressure_data(st.session_state.lat, st.session_state.lon)
     if df_raw is not None:
         df_proc = apply_dual_state_machine(df_raw, inject_disaster=st.session_state.disaster_mode_sim)
