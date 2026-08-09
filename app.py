@@ -46,6 +46,7 @@ if st.session_state.dark_mode:
     toggle_bg = "#111827"
     toggle_border = "#00F0FF"
     toggle_icon = "☀️"
+    header_border = "rgba(0, 240, 255, 0.2)"
 else:
     bg_color = "#F4F7FB"
     card_bg = "#FFFFFF"
@@ -55,6 +56,7 @@ else:
     toggle_bg = "#FFFFFF"
     toggle_border = "#0284C7"
     toggle_icon = "🌙"
+    header_border = "rgba(2, 132, 199, 0.2)"
 
 # Inject Global Adaptive CSS
 st.markdown(f"""
@@ -68,28 +70,21 @@ st.markdown(f"""
             color: {text_color} !important;
         }}
 
-        /* Hero Banner */
-        .hero-banner {{
-            background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
-            padding: 24px;
+        /* Pro Attached Header Bar */
+        .pro-header-card {{
+            background-color: {card_bg};
+            border: 1px solid {header_border};
             border-radius: 12px;
-            color: #FFFFFF !important;
-            text-align: center;
-            margin-top: 10px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 20px rgba(0, 198, 255, 0.3);
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         }}
-        .slogan-title {{
-            font-size: 2.2rem;
-            font-weight: 800;
-            margin: 0;
-            color: #FFFFFF !important;
-        }}
+
         .slogan-sub {{
-            font-size: 1.1rem;
-            opacity: 0.95;
-            margin-top: 6px;
-            color: #FFFFFF !important;
+            font-size: 1.05rem;
+            color: {accent_aqua} !important;
+            font-weight: 600;
+            margin-top: 4px;
         }}
 
         /* Clean Styled Toggle Button */
@@ -100,8 +95,9 @@ st.markdown(f"""
             font-size: 1.3rem !important;
             box-shadow: 0 0 10px {toggle_border}40 !important;
             transition: all 0.2s ease-in-out !important;
-            height: 42px !important;
-            width: 42px !important;
+            height: 44px !important;
+            width: 44px !important;
+            float: right !important;
         }}
 
         /* Universal Nav/Action Buttons */
@@ -128,22 +124,19 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- Top Header Row ---
+# --- Top App Bar Header with Subtitle ---
 header_col1, header_col2 = st.columns([6, 1])
 with header_col1:
-    st.markdown(f"<h2 style='margin: 0; color: {accent_aqua}; font-weight: 800;'>⚡ AtmoSync EN</h2>", unsafe_allow_html=True)
+    st.markdown(f"""
+        <div style="margin-bottom: 10px;">
+            <h1 style="margin: 0; color: {accent_aqua}; font-weight: 900; font-size: 2.3rem; letter-spacing: -0.5px;">⚡ AtmoSync Emergency Network</h1>
+            <div class="slogan-sub">Early Warning System & Off-Grid Emergency Navigation</div>
+        </div>
+    """, unsafe_allow_html=True)
 with header_col2:
     if st.button(toggle_icon, key="btn_theme_toggle_header", help="Toggle Light/Dark Theme"):
         st.session_state.dark_mode = not st.session_state.dark_mode
         st.rerun()
-
-# --- Hero Banner ---
-st.markdown("""
-    <div class="hero-banner">
-        <div class="slogan-title">AtmoSync Emergency Network</div>
-        <div class="slogan-sub">⚡ Early Warning System & Off-Grid Emergency Navigation</div>
-    </div>
-""", unsafe_allow_html=True)
 
 # --- Navigation Bar ---
 nav_col1, nav_col2, nav_col3, nav_col4 = st.columns(4)
