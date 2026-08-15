@@ -4,3 +4,6 @@ pandas
 numpy
 requests
 plotly
+fastapi
+uvicorn
+requests
