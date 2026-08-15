@@ -79,3 +79,8 @@ def get_telemetry(lat: float, lon: float):
 @app.get("/")
 def root():
     return {"status": "ok", "pwa": "/static/index.html"}
+from fastapi.responses import FileResponse
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse('static/icons/icon-192.png')
