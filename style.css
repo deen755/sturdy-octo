@@ -1,0 +1,207 @@
+/* style.css — AtmoSync Emergency Network
+   High-voltage neon glass, dark (tactical) / light (daylight) adaptive. */
+
+:root[data-theme="dark"] {
+  --bg-0: #05070d;
+  --bg-1: #0b0f1a;
+  --glass: rgba(18, 24, 41, 0.55);
+  --glass-strong: rgba(18, 24, 41, 0.75);
+  --border: rgba(0, 240, 255, 0.25);
+  --text: #eaf6ff;
+  --text-dim: #93a3bd;
+  --accent: #00f0ff;
+  --accent-2: #ff2fd0;
+  --safe: #33ff9c;
+  --warn: #ffcf4d;
+  --danger: #ff4d6d;
+  --glow: 0 0 24px rgba(0, 240, 255, 0.25);
+}
+
+:root[data-theme="light"] {
+  --bg-0: #eef2fb;
+  --bg-1: #e2e8f7;
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-strong: rgba(255, 255, 255, 0.78);
+  --border: rgba(0, 130, 170, 0.3);
+  --text: #0b1220;
+  --text-dim: #4a5570;
+  --accent: #0090b0;
+  --accent-2: #c400a0;
+  --safe: #0aa15c;
+  --warn: #c98a00;
+  --danger: #d92e4d;
+  --glow: 0 0 24px rgba(0, 140, 180, 0.15);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(0, 240, 255, 0.08), transparent 45%),
+    radial-gradient(circle at 85% 20%, rgba(255, 47, 208, 0.08), transparent 45%),
+    linear-gradient(180deg, var(--bg-0), var(--bg-1));
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+  padding: 18px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* subtle tactical grid overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.035) 1px, transparent 1px);
+  background-size: 42px 42px;
+  z-index: -1;
+}
+
+/* ---------- Glass card base ---------- */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ---------- Header ---------- */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.brand { display: flex; align-items: center; gap: 10px; }
+
+.brand h1 {
+  font-size: 1.3rem;
+  letter-spacing: 0.5px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand-sub { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.5px; }
+
+.header-controls { display: flex; align-items: center; gap: 14px; }
+
+#themeToggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+#themeToggle:hover { box-shadow: var(--glow); }
+
+.conn-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+  animation: pulse 1.6s infinite ease-in-out;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ---------- Threat banner (ΔP alert) ---------- */
+#threatBanner {
+  padding: 14px 20px;
+  margin-bottom: 18px;
+  border-left: 4px solid var(--safe);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+#threatBanner.level-safe { border-left-color: var(--safe); }
+#threatBanner.level-warn { border-left-color: var(--warn); }
+#threatBanner.level-danger {
+  border-left-color: var(--danger);
+  animation: dangerGlow 1.4s infinite alternate;
+}
+@keyframes dangerGlow {
+  from { box-shadow: var(--glow); }
+  to { box-shadow: 0 0 32px rgba(255, 77, 109, 0.45); }
+}
+
+#threatTitle { font-weight: 800; font-size: 0.95rem; }
+#threatSub { font-size: 0.78rem; color: var(--text-dim); }
+#deltaPValue { font-size: 1.4rem; font-weight: 800; }
+
+/* ---------- Reading grid ---------- */
+.reading-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.stat-card {
+  padding: 16px;
+  text-align: center;
+}
+.stat-label { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+.stat-value { font-size: 1.5rem; font-weight: 800; margin-top: 4px; color: var(--accent); }
+
+/* ---------- Map ---------- */
+#mapCard { padding: 4px; margin-bottom: 18px; overflow: hidden; }
+#map { width: 100%; height: 260px; border-radius: 14px; }
+
+/* ---------- Log ---------- */
+.section-title {
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 6px 0 10px 4px;
+}
+
+#log { padding: 6px; max-height: 300px; overflow-y: auto; }
+
+.log-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 0.6fr 0.6fr 0.8fr;
+  gap: 8px;
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.78rem;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+.log-row.queued { color: var(--warn); }
+.log-row.header { color: var(--text-dim); font-weight: 700; text-transform: uppercase; font-size: 0.65rem; }
+
+footer {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  margin: 20px 0 6px;
+}
+
+@media (max-width: 480px) {
+  .log-row { grid-template-columns: 1.2fr 0.8fr 0.6fr; }
+  .log-row span:nth-child(4), .log-row span:nth-child(5) { display: none; }
+}

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AtmoSync Emergency Network</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#00F0FF" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Leaflet, matching the mapping stack used in the Streamlit dashboard -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</head>
+<body>
+
+  <header class="glass">
+    <div class="brand">
+      <span style="font-size:1.5rem;">⚡</span>
+      <div>
+        <h1>ATMOSYNC EN</h1>
+        <div class="brand-sub">EARLY WARNING BAROMETRIC TELEMETRY</div>
+      </div>
+    </div>
+    <div class="header-controls">
+      <div id="connPill" class="conn-pill glass">
+        <span id="connDot" class="dot"></span>
+        <span id="connText">CHECKING…</span>
+      </div>
+      <button id="themeToggle">🌙 Dark</button>
+    </div>
+  </header>
+
+  <section id="threatBanner" class="glass level-safe">
+    <div>
+      <div id="threatTitle">THREAT LEVEL: NOMINAL</div>
+      <div id="threatSub">Barometric trend stable — no rapid pressure drop detected</div>
+    </div>
+    <div>
+      <span id="deltaPValue">ΔP —</span>
+    </div>
+  </section>
+
+  <main>
+    <div id="readingGrid" class="reading-grid">
+      <div class="stat-card glass"><div class="stat-label">Pressure</div><div class="stat-value" id="valPressure">—</div></div>
+      <div class="stat-card glass"><div class="stat-label">Temp</div><div class="stat-value" id="valTemp">—</div></div>
+      <div class="stat-card glass"><div class="stat-label">Humidity</div><div class="stat-value" id="valHumidity">—</div></div>
+      <div class="stat-card glass"><div class="stat-label">Wind</div><div class="stat-value" id="valWind">—</div></div>
+    </div>
+
+    <div id="mapCard" class="glass">
+      <div id="map"></div>
+    </div>
+
+    <div class="section-title">Active Telemetry Log</div>
+    <div id="log" class="glass">
+      <div class="log-row header">
+        <span>Time</span><span>Pressure</span><span>Temp</span><span>Humidity</span><span>Status</span>
+      </div>
+      <div id="logRows"></div>
+    </div>
+  </main>
+
+  <footer>AtmoSync Emergency Network — Off-Grid Barometric Early Warning MVP</footer>
+
+  <script src="db.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
