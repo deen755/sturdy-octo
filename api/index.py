@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 import pathlib
 
+
 app = FastAPI(title="AtmoSync EN API Gateway")
 
 app.add_middleware(
@@ -46,7 +47,10 @@ def service_worker():
         headers={"Cache-Control": "no-cache"},
     )
 
-
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse(STATIC_DIR / "icons" / "icon-192.png")
+    
 @app.get("/api/telemetry")
 def get_telemetry(lat: float, lon: float):
     """
