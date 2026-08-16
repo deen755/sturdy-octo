@@ -147,7 +147,7 @@ async function fetchTelemetry() {
 
   let latest = null;
   try {
-    const res = await fetch(`/api/telemetry?lat=${lat}&lon=${lon}`);
+    const res = await fetch(`/api/telemetry?lat=${lat}&lon=${lon}`, { cache: "no-store" });
     if (!res.ok) throw new Error("bad response");
     latest = await res.json();
     await AtmoDB.saveReading({ ...latest, lat, lon, synced: true });
