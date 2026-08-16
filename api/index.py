@@ -31,6 +31,11 @@ ROOT_DIR = pathlib.Path(__file__).parent.parent
 STATIC_DIR = ROOT_DIR / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+from fastapi.responses import FileResponse
+
+@app.get('/')
+async def read_index():
+    return FileResponse('static/index.html')
 
 @app.get("/sw.js")
 def service_worker():
