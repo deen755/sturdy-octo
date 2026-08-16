@@ -9,7 +9,7 @@
 # Your Streamlit app.py stays exactly as-is (dashboard/judge-facing view).
 # This file is the lightweight API + static host for the responder PWA.
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -66,7 +66,8 @@ async def favicon():
 
 
 @app.get("/api/telemetry")
-def get_telemetry(lat: float, lon: float):
+def get_telemetry(lat: float, lon: float, response: Response):
+    response.headers["Cache-Control"] = "no-store"
     """
     Latest single reading, used by the PWA for real-time ΔP threat detection.
     Same Open-Meteo source your Streamlit fetch_pressure_data() uses; the
