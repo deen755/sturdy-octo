@@ -4,18 +4,17 @@
 # api/ folder) and the static/ folder as siblings of your existing app.py.
 #
 # Local dev:  uvicorn api.index:app --reload --port 8000
-# Then open:  http://localhost:8000/static/index.html
+# Then open:  http://localhost:8000/  (redirects to /static/index.html)
 #
 # Your Streamlit app.py stays exactly as-is (dashboard/judge-facing view).
 # This file is the lightweight API + static host for the responder PWA.
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import pathlib
-
 
 app = FastAPI(title="AtmoSync EN API Gateway")
 
@@ -31,11 +30,19 @@ ROOT_DIR = pathlib.Path(__file__).parent.parent
 STATIC_DIR = ROOT_DIR / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-from fastapi.responses import FileResponse
 
-@app.get('/')
-async def read_index():
-    return FileResponse('static/index.html')
+@app.get("/")
+def root():
+    """
+    Redirect (not serve-in-place) to /static/index.html. index.html uses
+    relative asset paths (href="style.css", src="client.js", etc.), which
+    resolve against the browser's *current URL* — so the page must actually
+    be at /static/... for those relative links to hit the right files.
+    Returning the file's contents directly at "/" would leave the browser
+    thinking it's at "/", and every relative asset request would 404.
+    """
+    return RedirectResponse(url="/static/index.html")
+
 
 @app.get("/sw.js")
 def service_worker():
@@ -52,10 +59,12 @@ def service_worker():
         headers={"Cache-Control": "no-cache"},
     )
 
-@app.get('/favicon.ico', include_in_schema=False)
+
+@app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse(STATIC_DIR / "icons" / "icon-192.png")
-    
+
+
 @app.get("/api/telemetry")
 def get_telemetry(lat: float, lon: float):
     """
@@ -83,13 +92,3 @@ def get_telemetry(lat: float, lon: float):
         }
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"upstream unavailable: {e}")
-
-
-@app.get("/")
-def root():
-    return {"status": "ok", "pwa": "/static/index.html"}
-from fastapi.responses import FileResponse
-
-@app.get('/favicon.ico', include_in_schema=False)
-async def favicon():
-    return FileResponse('static/icons/icon-192.png')
