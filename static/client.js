@@ -14,11 +14,20 @@ const els = {
   valHumidity: document.getElementById("valHumidity"),
   valWind: document.getElementById("valWind"),
   logRows: document.getElementById("logRows"),
+  // Compass / device telemetry
+  enableSensors: document.getElementById("enableSensors"),
+  compassNeedle: document.getElementById("compassNeedle"),
+  valHeading: document.getElementById("valHeading"),
+  valPitch: document.getElementById("valPitch"),
+  valRoll: document.getElementById("valRoll"),
+  valSpeed: document.getElementById("valSpeed"),
 };
 
 let map, marker;
 
-// ---------- 1. Service worker registration (the "bridge" step) ----------
+// ================================================================
+// 1. Service worker registration (the "bridge" step)
+// ================================================================
 // sw.js is served from the root ("/sw.js" via a FastAPI route, not from
 // inside /static/) specifically so its default scope is "/" — giving it
 // control over the whole origin (including /api/* fallback interception),
@@ -32,7 +41,9 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// ---------- 2. Theme toggle (dark tactical / light daylight) ----------
+// ================================================================
+// 2. Theme toggle (dark tactical / light daylight)
+// ================================================================
 function initTheme() {
   const saved = localStorage.getItem("atmosync-theme") || "dark";
   document.documentElement.setAttribute("data-theme", saved);
@@ -47,7 +58,9 @@ els.themeToggle.addEventListener("click", () => {
 });
 initTheme();
 
-// ---------- 3. Geolocation ----------
+// ================================================================
+// 3. Geolocation (one-off, used for the telemetry API call + map)
+// ================================================================
 function getPosition() {
   return new Promise((resolve) => {
     if (!("geolocation" in navigator)) return resolve({ lat: 25.2048, lon: 55.2708 });
@@ -78,7 +91,9 @@ function initMap(lat, lon) {
   marker = L.marker([lat, lon], { icon: glowIcon }).addTo(map);
 }
 
-// ---------- 4. ΔP threat classification ----------
+// ================================================================
+// 4. ΔP calculation
+// ================================================================
 // ΔP thresholds are a simplified MVP heuristic — a 3hPa/3hr drop is a
 // widely used rule-of-thumb rapid-intensification signal for storms.
 //
@@ -105,42 +120,97 @@ function computeDeltaP(history) {
     }
   }
 
-  // Not enough history yet (app just started, or gap too large) — don't
-  // guess; report "gathering baseline" instead of a misleading number.
   if (!best || bestDiff > REFERENCE_TOLERANCE_MS) return null;
   return latest.pressure - best.pressure;
 }
 
-function classifyThreat(deltaP) {
-  const abs = Math.abs(deltaP);
-  if (abs >= 3) return { level: "danger", label: "SEVERE — RAPID PRESSURE DROP", sub: "ΔP exceeds 3 hPa — possible incoming storm system. Alert command center." };
-  if (abs >= 1.5) return { level: "warn", label: "ELEVATED — MONITOR CLOSELY", sub: "ΔP trending down — conditions worth tracking over the next readings." };
-  return { level: "safe", label: "NOMINAL", sub: "Barometric trend stable — no rapid pressure drop detected." };
-}
+// ================================================================
+// 5. System States — Nominal / Cautionary / Disaster Mode
+// ================================================================
+// Single source of truth for what "state" the whole app is in. Drives
+// the banner text/color AND the global UI theme (data-state attribute +
+// disaster-mode body class), not just a badge — Disaster Mode strips the
+// UI down to the essentials per the spec ("simplified high-contrast UI").
+//
+// Thresholds combine ΔP (rapid pressure drop) and wind speed, since either
+// alone can signal a severe event. Extend this function first if you need
+// more inputs (e.g. humidity spikes, a real storm-cell API) later.
+function evaluateSystemState({ deltaP, wind }) {
+  const absDeltaP = deltaP === null ? 0 : Math.abs(deltaP);
+  const windVal = wind ?? 0;
 
-function renderThreat(deltaP) {
-  if (deltaP === null) {
-    els.threatBanner.className = "glass level-safe";
-    els.threatTitle.textContent = "THREAT LEVEL: GATHERING BASELINE";
-    els.threatSub.textContent = "Need ~3 hours of readings before ΔP trend is reliable.";
-    els.deltaPValue.textContent = "ΔP —";
-    return;
+  if (absDeltaP >= 3 || windVal >= 60) {
+    return {
+      state: "disaster",
+      label: "DISASTER MODE — SEVERE CONDITIONS",
+      sub: "Rapid pressure drop or extreme wind detected. Simplified emergency view active.",
+    };
   }
-  const t = classifyThreat(deltaP);
-  els.threatBanner.className = `glass level-${t.level}`;
-  els.threatTitle.textContent = `THREAT LEVEL: ${t.label}`;
-  els.threatSub.textContent = t.sub;
-  els.deltaPValue.textContent = `ΔP ${deltaP > 0 ? "+" : ""}${deltaP.toFixed(2)} hPa`;
+  if (absDeltaP >= 1.5 || windVal >= 35) {
+    return {
+      state: "cautionary",
+      label: "CAUTIONARY — MONITOR CLOSELY",
+      sub: "Conditions trending toward severe. Stay alert and recheck often.",
+    };
+  }
+  if (deltaP === null) {
+    return {
+      state: "nominal",
+      label: "GATHERING BASELINE",
+      sub: "Need ~3 hours of readings before ΔP trend is reliable.",
+    };
+  }
+  return {
+    state: "nominal",
+    label: "NOMINAL",
+    sub: "Barometric trend stable — no rapid pressure drop detected.",
+  };
 }
 
-// ---------- 5. Connection status pill ----------
+function applySystemState(stateInfo, deltaP) {
+  // data-state on <html> lets any CSS in the app theme off the current
+  // state, not just the banner — e.g. [data-state="disaster"] rules.
+  document.documentElement.setAttribute("data-state", stateInfo.state);
+  document.body.classList.toggle("disaster-mode", stateInfo.state === "disaster");
+
+  els.threatBanner.className = `glass level-${stateInfo.state}`;
+  els.threatTitle.textContent = `SYSTEM STATE: ${stateInfo.label}`;
+  els.threatSub.textContent = stateInfo.sub;
+  els.deltaPValue.textContent =
+    deltaP === null ? "ΔP —" : `ΔP ${deltaP > 0 ? "+" : ""}${deltaP.toFixed(2)} hPa`;
+}
+
+// ================================================================
+// 6. Connection status pill
+// ================================================================
 function setStatus(online) {
   els.connText.textContent = online ? "ONLINE" : "OFFLINE — CACHED DATA";
   els.connDot.style.color = online ? "var(--safe)" : "var(--danger)";
   els.connDot.style.background = online ? "var(--safe)" : "var(--danger)";
 }
 
-// ---------- 6. Fetch telemetry (network-first, IndexedDB fallback) ----------
+// ================================================================
+// 7. Real-life telemetry fetch — network-first, IndexedDB fallback,
+//    synthetic simulation as a last resort (Fail-Safe Telemetry Pipeline)
+// ================================================================
+// Three-tier data source, in priority order:
+//   1. Live network fetch (/api/telemetry) — real Open-Meteo data
+//   2. Cached IndexedDB reading — last known real reading, works offline
+//   3. Simulated synthetic cycle — ONLY when there is no network AND no
+//      cached history at all (e.g. brand-new device, first launch, no
+//      connectivity yet). Keeps the dashboard from showing a blank screen
+//      on a cold start, exactly like the original Streamlit fallback engine.
+function simulateReading() {
+  const now = Date.now();
+  return {
+    pressure: Number((1013 + 4 * Math.sin(now / (1000 * 60 * 60 * 6))).toFixed(2)),
+    temp: Number((28 + 3 * Math.sin(now / (1000 * 60 * 60 * 12))).toFixed(1)),
+    humidity: Number((60 + 10 * Math.sin(now / (1000 * 60 * 60 * 8))).toFixed(0)),
+    wind: Number((12 + 8 * Math.abs(Math.sin(now / (1000 * 60 * 60 * 4)))).toFixed(1)),
+    simulated: true,
+  };
+}
+
 async function fetchTelemetry() {
   const { lat, lon } = await getPosition();
   initMap(lat, lon);
@@ -154,6 +224,13 @@ async function fetchTelemetry() {
     setStatus(true);
   } catch (err) {
     setStatus(false);
+    const existing = await AtmoDB.getAllReadings();
+    if (existing.length === 0) {
+      // No network AND no history at all yet — seed with a simulated
+      // reading so the UI never renders a blank/empty dashboard.
+      const sim = simulateReading();
+      await AtmoDB.saveReading({ ...sim, lat, lon, synced: false });
+    }
   }
 
   const history = await AtmoDB.getAllReadings();
@@ -166,23 +243,26 @@ async function fetchTelemetry() {
     els.valWind.textContent = display.wind != null ? `${display.wind} km/h` : "—";
   }
 
-  renderThreat(computeDeltaP(history));
+  const deltaP = computeDeltaP(history);
+  applySystemState(evaluateSystemState({ deltaP, wind: display?.wind ?? null }), deltaP);
   renderLog(history);
 }
 
 function renderLog(history) {
   els.logRows.innerHTML = history
     .slice(0, 25)
-    .map(
-      (r) => `
-      <div class="log-row ${r.synced ? "" : "queued"}">
+    .map((r) => {
+      const statusLabel = r.simulated ? "SIMULATED" : r.synced ? "SYNCED" : "QUEUED";
+      const rowClass = r.simulated ? "simulated" : r.synced ? "" : "queued";
+      return `
+      <div class="log-row ${rowClass}">
         <span>${new Date(r.timestamp).toLocaleString()}</span>
         <span>${r.pressure ?? "—"} hPa</span>
         <span>${r.temp ?? "—"}°C</span>
         <span>${r.humidity ?? "—"}%</span>
-        <span>${r.synced ? "SYNCED" : "QUEUED"}</span>
-      </div>`
-    )
+        <span>${statusLabel}</span>
+      </div>`;
+    })
     .join("");
 }
 
@@ -191,3 +271,112 @@ window.addEventListener("offline", () => setStatus(false));
 
 fetchTelemetry();
 setInterval(fetchTelemetry, 5 * 60 * 1000); // poll every 5 min
+
+// ================================================================
+// 8. Compass & device orientation telemetry
+// ================================================================
+// iOS 13+ requires an explicit user-gesture permission prompt for both
+// DeviceOrientationEvent and DeviceMotionEvent (privacy requirement —
+// these APIs can otherwise fingerprint/track a device). Android (and
+// desktop Chrome) expose them with no permission step at all. We detect
+// which situation we're in and only show a gate when actually needed.
+function iosPermissionNeeded() {
+  return (
+    typeof DeviceOrientationEvent !== "undefined" &&
+    typeof DeviceOrientationEvent.requestPermission === "function"
+  );
+}
+
+function headingLabel(deg) {
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  return dirs[Math.round(deg / 45) % 8];
+}
+
+function updateCompassUI(heading, beta, gamma) {
+  const normalized = ((heading % 360) + 360) % 360;
+  if (els.compassNeedle) els.compassNeedle.style.transform = `rotate(${normalized}deg)`;
+  if (els.valHeading) els.valHeading.textContent = `${Math.round(normalized)}° ${headingLabel(normalized)}`;
+  if (els.valPitch) els.valPitch.textContent = beta != null ? `${Math.round(beta)}°` : "—";
+  if (els.valRoll) els.valRoll.textContent = gamma != null ? `${Math.round(gamma)}°` : "—";
+}
+
+function handleOrientation(event) {
+  let heading;
+  if (event.webkitCompassHeading !== undefined) {
+    // iOS: webkitCompassHeading is already a true compass bearing (0 = N,
+    // clockwise), no conversion needed.
+    heading = event.webkitCompassHeading;
+  } else if (event.alpha !== null) {
+    // Android/most others: alpha is the device's rotation around the Z
+    // axis, counter-clockwise from its initial orientation — 360 - alpha
+    // approximates true heading for a flat, front-facing device. Not as
+    // accurate as a magnetometer-fused API, but standard for this event.
+    heading = 360 - event.alpha;
+  } else {
+    return; // no usable data on this device/browser
+  }
+  updateCompassUI(heading, event.beta, event.gamma);
+}
+
+function startCompass() {
+  const eventName = "ondeviceorientationabsolute" in window
+    ? "deviceorientationabsolute"
+    : "deviceorientation";
+  window.addEventListener(eventName, handleOrientation);
+}
+
+function startSpeedWatch() {
+  if (!("geolocation" in navigator)) return;
+  navigator.geolocation.watchPosition(
+    (pos) => {
+      // coords.speed is meters/second and can be null if the device can't
+      // determine it (e.g. stationary, no GPS fix yet).
+      const speedMs = pos.coords.speed;
+      if (els.valSpeed) {
+        els.valSpeed.textContent = speedMs != null ? `${(speedMs * 3.6).toFixed(1)} km/h` : "—";
+      }
+    },
+    (err) => console.warn("watchPosition error:", err),
+    { enableHighAccuracy: true }
+  );
+}
+
+async function requestSensorPermissions() {
+  els.enableSensors.disabled = true;
+  els.enableSensors.textContent = "Requesting…";
+  try {
+    if (iosPermissionNeeded()) {
+      const result = await DeviceOrientationEvent.requestPermission();
+      if (result !== "granted") throw new Error("orientation permission denied");
+    }
+    // Motion permission (iOS) is separate from orientation; request it too
+    // if present, but don't block compass/heading on it — it's only used
+    // for future accelerometer-based features, not heading itself.
+    if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+      await DeviceMotionEvent.requestPermission().catch(() => {});
+    }
+    startCompass();
+    startSpeedWatch();
+    els.enableSensors.textContent = "Sensors Active";
+  } catch (err) {
+    console.error("Sensor permission denied:", err);
+    els.enableSensors.disabled = false;
+    els.enableSensors.textContent = "Permission Denied — Tap to Retry";
+  }
+}
+
+els.enableSensors?.addEventListener("click", requestSensorPermissions);
+
+// Android / desktop: no permission gate needed, start immediately.
+// iOS: leave the button active, waiting for the required user tap.
+if (!iosPermissionNeeded() && typeof DeviceOrientationEvent !== "undefined") {
+  startCompass();
+  startSpeedWatch();
+  if (els.enableSensors) {
+    els.enableSensors.textContent = "Sensors Active";
+    els.enableSensors.disabled = true;
+  }
+} else if (typeof DeviceOrientationEvent === "undefined" && els.enableSensors) {
+  els.enableSensors.textContent = "Not Supported";
+  els.enableSensors.disabled = true;
+}
