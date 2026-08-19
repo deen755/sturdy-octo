@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
- <link rel="shortcut icon" href="/static/icons/icon-192.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AtmoSync Emergency Network</title>
@@ -34,9 +33,9 @@
     </div>
   </header>
 
-  <section id="threatBanner" class="glass level-safe">
+  <section id="threatBanner" class="glass level-nominal">
     <div>
-      <div id="threatTitle">THREAT LEVEL: NOMINAL</div>
+      <div id="threatTitle">SYSTEM STATE: NOMINAL</div>
       <div id="threatSub">Barometric trend stable — no rapid pressure drop detected</div>
     </div>
     <div>
@@ -50,6 +49,28 @@
       <div class="stat-card glass"><div class="stat-label">Temp</div><div class="stat-value" id="valTemp">—</div></div>
       <div class="stat-card glass"><div class="stat-label">Humidity</div><div class="stat-value" id="valHumidity">—</div></div>
       <div class="stat-card glass"><div class="stat-label">Wind</div><div class="stat-value" id="valWind">—</div></div>
+    </div>
+
+    <div id="compassCard" class="glass">
+      <div class="compass-card-header">
+        <span class="section-title" style="margin:0;">Compass & Device Telemetry</span>
+        <button id="enableSensors" class="sensor-btn">Enable Sensors</button>
+      </div>
+      <div class="compass-body">
+        <div class="compass-dial">
+          <span class="compass-tick n">N</span>
+          <span class="compass-tick e">E</span>
+          <span class="compass-tick s">S</span>
+          <span class="compass-tick w">W</span>
+          <div id="compassNeedle" class="compass-needle"></div>
+        </div>
+        <div class="compass-body-secondary">
+          <div class="stat-card glass"><div class="stat-label">Heading</div><div class="stat-value" id="valHeading" style="font-size:1.1rem;">—</div></div>
+          <div class="stat-card glass"><div class="stat-label">Pitch</div><div class="stat-value" id="valPitch" style="font-size:1.1rem;">—</div></div>
+          <div class="stat-card glass"><div class="stat-label">Roll</div><div class="stat-value" id="valRoll" style="font-size:1.1rem;">—</div></div>
+          <div class="stat-card glass"><div class="stat-label">Speed</div><div class="stat-value" id="valSpeed" style="font-size:1.1rem;">—</div></div>
+        </div>
+      </div>
     </div>
 
     <div id="mapCard" class="glass">
