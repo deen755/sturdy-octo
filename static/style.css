@@ -192,7 +192,123 @@ header {
   font-family: "SFMono-Regular", Consolas, monospace;
 }
 .log-row.queued { color: var(--warn); }
+.log-row.simulated { color: var(--accent-2); }
 .log-row.header { color: var(--text-dim); font-weight: 700; text-transform: uppercase; font-size: 0.65rem; }
+
+/* ---------- System State theming ---------- */
+/* level-nominal / level-cautionary / level-disaster replace the old
+   level-safe / level-warn / level-danger names to match the 3-tier
+   System State model (Nominal / Cautionary / Disaster Mode). */
+#threatBanner.level-nominal { border-left-color: var(--safe); }
+#threatBanner.level-cautionary {
+  border-left-color: var(--warn);
+  animation: dangerGlow 2s infinite alternate;
+}
+#threatBanner.level-disaster {
+  border-left-color: var(--danger);
+  animation: dangerGlow 0.9s infinite alternate;
+}
+
+/* Disaster Mode: simplified, high-contrast emergency view. Non-essential
+   sections (map, log, compass detail) hide so the critical banner + core
+   readings are the only thing on screen — designed to be readable at a
+   glance under stress, not for browsing. */
+body.disaster-mode {
+  --bg-0: #1a0006;
+  --bg-1: #100004;
+}
+body.disaster-mode #threatBanner {
+  border-left-width: 8px;
+  padding: 22px 20px;
+}
+body.disaster-mode #threatTitle { font-size: 1.3rem; }
+body.disaster-mode .stat-value { font-size: 2rem; color: var(--danger); }
+body.disaster-mode #mapCard,
+body.disaster-mode #log,
+body.disaster-mode .section-title,
+body.disaster-mode #compassCard .compass-body-secondary {
+  display: none;
+}
+
+/* ---------- Compass ---------- */
+#compassCard { padding: 18px; margin-bottom: 18px; }
+
+.compass-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.sensor-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sensor-btn:hover { box-shadow: var(--glow); }
+.sensor-btn:disabled { opacity: 0.6; cursor: default; }
+
+.compass-body { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+
+.compass-dial {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.06), transparent 70%);
+  flex-shrink: 0;
+}
+.compass-tick {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+.compass-tick.e { top: 50%; left: auto; right: 6px; transform: translateY(-50%); }
+.compass-tick.s { top: auto; bottom: 6px; left: 50%; transform: translateX(-50%); }
+.compass-tick.w { top: 50%; left: 6px; transform: translateY(-50%); }
+
+.compass-needle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 52px;
+  margin-left: -2px;
+  margin-top: -52px;
+  transform-origin: bottom center;
+  background: linear-gradient(180deg, var(--accent-2), var(--accent));
+  border-radius: 3px;
+  box-shadow: 0 0 10px var(--accent);
+  transition: transform 0.15s ease-out;
+}
+.compass-dial::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 8px; height: 8px;
+  margin: -4px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.compass-body-secondary {
+  flex: 1;
+  min-width: 200px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
 
 footer {
   text-align: center;
