@@ -386,6 +386,29 @@ if (!iosPermissionNeeded() && typeof DeviceOrientationEvent !== "undefined") {
   els.enableSensors.disabled = true;
 }
 
+async function syncTelemetryWithAI(sensorData) {
+  try {
+    const response = await fetch('https://your-vercel-backend-url.app/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        surface_pressure: sensorData.pressure || 1013.25,
+        pressure_delta_3h: sensorData.pressureDelta || 0.0,
+        temperature: sensorData.temperature || 28.0,
+        humidity: sensorData.humidity || 55.0,
+        wind_speed: sensorData.windSpeed || 5.0
+      })
+    });
+
+    const result = await response.json();
+    
+    // Automatically trigger state transition UI updates based on AI classification
+    updateUIState(result.predicted_state);
+  } catch (err) {
+    console.error("Inference fetch error:", err);
+  }
+}
+
 navigator.geolocation.getCurrentPosition((position) => {
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;
