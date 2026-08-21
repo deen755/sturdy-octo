@@ -2,3 +2,9 @@ fastapi
 uvicorn
 requests
 atmosync_model.pkl
+pandas
+numpy
+joblib
+xgboost
+scikit-learn
+pydantic
