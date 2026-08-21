@@ -4,17 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AtmoSync Emergency Network</title>
-
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#00F0FF" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Leaflet, matching the mapping stack used in the Streamlit dashboard -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
-<body>
+<body class="mode-nominal">
 
   <header class="glass">
     <div class="brand">
@@ -33,7 +30,7 @@
     </div>
   </header>
 
-  <section id="threatBanner" class="glass level-nominal">
+  <section id="threatBanner" class="glass">
     <div>
       <div id="threatTitle">SYSTEM STATE: NOMINAL</div>
       <div id="threatSub">Barometric trend stable — no rapid pressure drop detected</div>
