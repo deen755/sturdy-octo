@@ -195,40 +195,99 @@ header {
 .log-row.simulated { color: var(--accent-2); }
 .log-row.header { color: var(--text-dim); font-weight: 700; text-transform: uppercase; font-size: 0.65rem; }
 
-/* ---------- System State theming ---------- */
-/* level-nominal / level-cautionary / level-disaster replace the old
-   level-safe / level-warn / level-danger names to match the 3-tier
-   System State model (Nominal / Cautionary / Disaster Mode). */
-#threatBanner.level-nominal { border-left-color: var(--safe); }
-#threatBanner.level-cautionary {
-  border-left-color: var(--warn);
-  animation: dangerGlow 2s infinite alternate;
-}
-#threatBanner.level-disaster {
-  border-left-color: var(--danger);
-  animation: dangerGlow 0.9s infinite alternate;
+/* ================================================================
+   System State theming — Nominal / Cautionary / Disaster
+   ================================================================
+   Design rule: NEVER flood the page background with a mode color.
+   The dark base (#0D1117 / --bg-0) is always preserved.
+   State is communicated through two targeted elements only:
+     1. A 6px fixed top accent bar (::before pseudo on body)
+     2. A left-bordered status badge on the banner card
+   ================================================================ */
+
+/* ---------- 1. Fixed top indicator bar ---------- */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 6px;
+  z-index: 9999;
+  transition: background 0.4s ease, box-shadow 0.4s ease;
 }
 
-/* Disaster Mode: simplified, high-contrast emergency view. Non-essential
-   sections (map, log, compass detail) hide so the critical banner + core
-   readings are the only thing on screen — designed to be readable at a
-   glance under stress, not for browsing. */
-body.disaster-mode {
-  --bg-0: #1a0006;
-  --bg-1: #100004;
+body.mode-nominal::after {
+  background: #2EA043;
+  box-shadow: none;
 }
-body.disaster-mode #threatBanner {
-  border-left-width: 8px;
-  padding: 22px 20px;
+
+body.mode-cautionary::after {
+  background: #D29922;
+  box-shadow: none;
 }
-body.disaster-mode #threatTitle { font-size: 1.3rem; }
-body.disaster-mode .stat-value { font-size: 2rem; color: var(--danger); }
-body.disaster-mode #mapCard,
-body.disaster-mode #log,
-body.disaster-mode .section-title,
-body.disaster-mode #compassCard .compass-body-secondary {
+
+body.mode-disaster::after {
+  background: #F85149;
+  box-shadow: 0 0 12px #F85149;
+  animation: disasterBarPulse 1.2s infinite alternate;
+}
+
+@keyframes disasterBarPulse {
+  from { box-shadow: 0 0 8px #F85149; }
+  to   { box-shadow: 0 0 20px #F85149, 0 0 40px rgba(248, 81, 73, 0.4); }
+}
+
+/* ---------- 2. Status badge (replaces the old level-* banner rules) ---------- */
+/* The banner is now a compact dark card with a left border —
+   no background wash, no full-screen color change. */
+#threatBanner {
+  background: #161B22 !important;
+  border-left-width: 4px !important;
+  border-radius: 12px;
+}
+
+body.mode-nominal #threatBanner {
+  border-left-color: #2EA043 !important;
+}
+body.mode-nominal #threatTitle { color: #2EA043; }
+
+body.mode-cautionary #threatBanner {
+  border-left-color: #D29922 !important;
+}
+body.mode-cautionary #threatTitle { color: #D29922; }
+
+body.mode-disaster #threatBanner {
+  border-left-color: #F85149 !important;
+  animation: disasterBadgePulse 1.2s infinite alternate;
+}
+body.mode-disaster #threatTitle {
+  color: #F85149;
+  animation: disasterBadgePulse 1.2s infinite alternate;
+}
+
+@keyframes disasterBadgePulse {
+  from { opacity: 1; }
+  to   { opacity: 0.7; }
+}
+
+/* ---------- 3. Disaster Mode — simplified view, dark base preserved ---------- */
+/* Background stays #0D1117 — only non-essential panels hide.
+   stat values enlarge for at-a-glance readability under stress. */
+body.mode-disaster { --bg-0: #0D1117; --bg-1: #0D1117; }
+
+body.mode-disaster .stat-value {
+  font-size: 2rem;
+  color: #F85149;
+}
+body.mode-disaster #mapCard,
+body.mode-disaster #log,
+body.mode-disaster .section-title,
+body.mode-disaster #compassCard .compass-body-secondary {
   display: none;
 }
+
+/* Cautionary and Nominal: no layout changes, full UI visible */
+body.mode-nominal  { --bg-0: #0D1117; --bg-1: #0b0f1a; }
+body.mode-cautionary { --bg-0: #0D1117; --bg-1: #0b0f1a; }
 
 /* ---------- Compass ---------- */
 #compassCard { padding: 18px; margin-bottom: 18px; }
