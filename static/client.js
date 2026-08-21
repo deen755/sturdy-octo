@@ -385,3 +385,9 @@ if (!iosPermissionNeeded() && typeof DeviceOrientationEvent !== "undefined") {
   els.enableSensors.textContent = "Not Supported";
   els.enableSensors.disabled = true;
 }
+
+navigator.geolocation.getCurrentPosition((position) => {
+  const lat = position.coords.latitude;
+  const lon = position.coords.longitude;
+  fetchLiveTelemetry(lat, lon);
+});
