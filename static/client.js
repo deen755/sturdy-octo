@@ -168,12 +168,17 @@ function evaluateSystemState({ deltaP, wind }) {
 }
 
 function applySystemState(stateInfo, deltaP) {
-  // data-state on <html> lets any CSS in the app theme off the current
-  // state, not just the banner — e.g. [data-state="disaster"] rules.
+  // data-state on <html> for any CSS that wants to key off it.
   document.documentElement.setAttribute("data-state", stateInfo.state);
-  document.body.classList.toggle("disaster-mode", stateInfo.state === "disaster");
 
-  els.threatBanner.className = `glass level-${stateInfo.state}`;
+  // Remove all mode classes, then apply the current one.
+  // This drives both the top indicator bar (body::after) and the
+  // left-bordered status badge — no background floods anywhere.
+  document.body.classList.remove("mode-nominal", "mode-cautionary", "mode-disaster");
+  document.body.classList.add(`mode-${stateInfo.state}`);
+
+  // Banner class only controls glass base now; color comes from CSS mode rules.
+  els.threatBanner.className = "glass";
   els.threatTitle.textContent = `SYSTEM STATE: ${stateInfo.label}`;
   els.threatSub.textContent = stateInfo.sub;
   els.deltaPValue.textContent =
