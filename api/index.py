@@ -131,6 +131,20 @@ def service_worker():
     )
 
 
+@app.get("/manifest.json")
+def manifest():
+    """
+    Serve manifest.json from root so its scope ("/") matches the
+    start_url ("/") — a manifest served from /static/ with scope "/"
+    would be cross-origin to the start_url and Chrome would reject it.
+    """
+    return FileResponse(
+        STATIC_DIR / "manifest.json",
+        media_type="application/manifest+json",
+        headers={"Cache-Control": "no-cache"},
+    )
+
+
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse(STATIC_DIR / "icons" / "icon-192.png")
