@@ -249,9 +249,68 @@ async function fetchTelemetry() {
   }
 
   const deltaP = computeDeltaP(history);
-  applySystemState(evaluateSystemState({ deltaP, wind: display?.wind ?? null }), deltaP);
+
+  // Try backend model prediction first; fall back to local JS rule-based
+  // evaluation if the endpoint is unreachable (offline or model not loaded).
+  let stateInfo;
+  if (display && navigator.onLine) {
+    try {
+      const predRes = await fetch("/api/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pressure: display.pressure ?? 1013,
+          temp: display.temp ?? 25,
+          humidity: display.humidity ?? 60,
+          wind: display.wind ?? 0,
+          delta_p: deltaP ?? 0,
+        }),
+      });
+      if (predRes.ok) {
+        const pred = await predRes.json();
+        // Backend returns { state, label, source } — map to the same
+        // shape applySystemState() expects so we don't duplicate display logic.
+        stateInfo = {
+          state: pred.state,
+          label: pred.label,
+          sub: pred.source === "model"
+            ? "XGBoost model prediction based on live telemetry."
+            : evaluateSystemState({ deltaP, wind: display.wind }).sub,
+        };
+      } else {
+        throw new Error("predict endpoint error");
+      }
+    } catch {
+      stateInfo = evaluateSystemState({ deltaP, wind: display?.wind ?? null });
+    }
+  } else {
+    stateInfo = evaluateSystemState({ deltaP, wind: display?.wind ?? null });
+  }
+
+  applySystemState(stateInfo, deltaP);
   renderLog(history);
 }
+
+// ================================================================
+// PWA install button (optional — works alongside the auto-prompt)
+// ================================================================
+// The beforeinstallprompt event is captured in index.html before body
+// loads (window.__pwaInstallPrompt). Here we just expose a function
+// client code can call to trigger it on demand (e.g. an install button).
+window.addEventListener("pwa-install-ready", () => {
+  console.log("[PWA] install prompt ready — can trigger on user gesture");
+});
+
+window.triggerInstall = async function () {
+  if (!window.__pwaInstallPrompt) {
+    console.warn("[PWA] no install prompt available — already installed or not eligible");
+    return;
+  }
+  window.__pwaInstallPrompt.prompt();
+  const { outcome } = await window.__pwaInstallPrompt.userChoice;
+  console.log(`[PWA] install outcome: ${outcome}`);
+  window.__pwaInstallPrompt = null;
+};
 
 function renderLog(history) {
   els.logRows.innerHTML = history
