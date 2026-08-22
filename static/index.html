@@ -4,12 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AtmoSync Emergency Network</title>
-  <link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="/static/manifest.json" />
   <meta name="theme-color" content="#00F0FF" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+  <!-- PWA install prompt capture — must be inline before body loads -->
+  <script>
+    window.__pwaInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent the mini-infobar from appearing immediately on mobile
+      // so we control exactly when the prompt fires (via the install button
+      // or after a meaningful interaction). Store the event for later use.
+      e.preventDefault();
+      window.__pwaInstallPrompt = e;
+      console.log('[PWA] beforeinstallprompt captured — install available');
+      // Dispatch a custom event so client.js can react if it's already loaded
+      window.dispatchEvent(new Event('pwa-install-ready'));
+    });
+    window.addEventListener('appinstalled', () => {
+      console.log('[PWA] app installed successfully');
+      window.__pwaInstallPrompt = null;
+    });
+  </script>
 </head>
 <body class="mode-nominal">
 
