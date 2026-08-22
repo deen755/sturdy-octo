@@ -1,9 +1,6 @@
-streamlit
-scikit-learn
-pandas
-numpy
-requests
-plotly
 fastapi
 uvicorn
 requests
+joblib
+xgboost
+numpy
