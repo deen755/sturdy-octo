@@ -44,28 +44,26 @@ if ("serviceWorker" in navigator) {
 // ================================================================
 // 2. Theme toggle (dark tactical / light daylight)
 // ================================================================
-// syncThemeColor reads the active --bg-0 CSS variable from the root
-// element after the data-theme attribute is set, then writes that
-// exact color into the <meta name="theme-color"> tag. This syncs the
-// Android/iOS status bar to match the app background on every toggle
-// without hardcoding any color values here — the CSS variables are
-// the single source of truth.
-function syncThemeColor() {
+// Theme color map for the mobile status bar — must stay in sync with
+// the --bg-0 values in style.css. These are the only two values that
+// ever appear as the page background, so a direct map is more reliable
+// than reading getComputedStyle (which can race against attribute updates).
+const THEME_COLORS = {
+  dark:  "#05070d",
+  light: "#ffffff",
+};
+
+function syncThemeColor(theme) {
   const meta = document.getElementById("theme-meta");
   if (!meta) return;
-  // getPropertyValue reads the resolved CSS variable value after the
-  // data-theme attribute has already been applied to :root.
-  const bg = getComputedStyle(document.documentElement)
-    .getPropertyValue("--bg-0")
-    .trim();
-  if (bg) meta.setAttribute("content", bg);
+  meta.setAttribute("content", THEME_COLORS[theme] || THEME_COLORS.dark);
 }
 
 function initTheme() {
   const saved = localStorage.getItem("atmosync-theme") || "dark";
   document.documentElement.setAttribute("data-theme", saved);
   els.themeToggle.textContent = saved === "dark" ? "🌙 Dark" : "☀️ Light";
-  syncThemeColor();
+  syncThemeColor(saved);
 }
 
 els.themeToggle.addEventListener("click", () => {
@@ -74,7 +72,7 @@ els.themeToggle.addEventListener("click", () => {
   document.documentElement.setAttribute("data-theme", next);
   localStorage.setItem("atmosync-theme", next);
   els.themeToggle.textContent = next === "dark" ? "🌙 Dark" : "☀️ Light";
-  syncThemeColor();
+  syncThemeColor(next);
 });
 initTheme();
 
