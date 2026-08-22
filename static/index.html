@@ -4,29 +4,87 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AtmoSync Emergency Network</title>
-  <link rel="manifest" href="/static/manifest.json" />
-  <meta name="theme-color" content="#00F0FF" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" id="theme-meta" content="#05070d" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
-  <!-- PWA install prompt capture — must be inline before body loads -->
+  <!-- PWA install prompt — inline in <head> so it captures the
+       beforeinstallprompt event before the page body finishes loading.
+       That event fires early and is permanently missed if the listener
+       is added after it fires (e.g. inside client.js which loads later). -->
   <script>
+    // ── Install prompt (Android / desktop Chrome) ──────────────────
     window.__pwaInstallPrompt = null;
+
     window.addEventListener('beforeinstallprompt', (e) => {
-      // Prevent the mini-infobar from appearing immediately on mobile
-      // so we control exactly when the prompt fires (via the install button
-      // or after a meaningful interaction). Store the event for later use.
-      e.preventDefault();
+      e.preventDefault(); // suppress the automatic mini-infobar
       window.__pwaInstallPrompt = e;
-      console.log('[PWA] beforeinstallprompt captured — install available');
-      // Dispatch a custom event so client.js can react if it's already loaded
+      console.log('[PWA] beforeinstallprompt captured');
+
+      // Reveal the install button now that we know install is available
+      const btn = document.getElementById('installBtn');
+      if (btn) btn.style.display = 'block';
+
       window.dispatchEvent(new Event('pwa-install-ready'));
     });
+
     window.addEventListener('appinstalled', () => {
-      console.log('[PWA] app installed successfully');
+      console.log('[PWA] installed successfully');
       window.__pwaInstallPrompt = null;
+      const btn = document.getElementById('installBtn');
+      if (btn) btn.style.display = 'none';
+    });
+
+    // Wire the install button once DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('installBtn');
+      if (btn) {
+        btn.addEventListener('click', async () => {
+          if (!window.__pwaInstallPrompt) return;
+          window.__pwaInstallPrompt.prompt();
+          const { outcome } = await window.__pwaInstallPrompt.userChoice;
+          console.log('[PWA] install outcome:', outcome);
+          window.__pwaInstallPrompt = null;
+          btn.style.display = 'none';
+        });
+      }
+
+      // ── iOS Safari fallback ────────────────────────────────────────
+      // iOS Safari does not fire beforeinstallprompt and never will —
+      // it uses its own Share → Add to Home Screen flow instead.
+      // Detect iOS and show a one-time guidance banner if not already
+      // installed (standalone mode means it's already on the home screen).
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const isStandalone = window.navigator.standalone === true;
+      const iosDismissed = sessionStorage.getItem('ios-banner-dismissed');
+
+      if (isIOS && !isStandalone && !iosDismissed) {
+        const banner = document.createElement('div');
+        banner.id = 'iosBanner';
+        banner.style.cssText = [
+          'position:fixed', 'bottom:16px', 'left:50%',
+          'transform:translateX(-50%)', 'z-index:10000',
+          'background:#161B22', 'border:1px solid rgba(0,240,255,0.25)',
+          'border-radius:14px', 'padding:12px 16px',
+          'font-size:0.8rem', 'color:#eaf6ff',
+          'box-shadow:0 4px 24px rgba(0,0,0,0.5)',
+          'max-width:300px', 'text-align:center', 'line-height:1.5'
+        ].join(';');
+        banner.innerHTML = `
+          <span style="font-size:1.1rem">📲</span><br>
+          To install AtmoSync on iOS:<br>
+          tap <strong>Share</strong> ↑ then
+          <strong>Add to Home Screen</strong>
+          <br><br>
+          <button onclick="sessionStorage.setItem('ios-banner-dismissed','1');this.parentElement.remove();"
+            style="background:transparent;border:1px solid rgba(0,240,255,0.3);
+                   color:#00f0ff;border-radius:8px;padding:4px 12px;cursor:pointer;
+                   font-size:0.75rem;">Got it</button>`;
+        document.body.appendChild(banner);
+      }
     });
   </script>
 </head>
@@ -45,6 +103,7 @@
         <span id="connDot" class="dot"></span>
         <span id="connText">CHECKING…</span>
       </div>
+      <button id="installBtn" style="display:none;background:transparent;border:1px solid var(--border);color:var(--accent);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:0.85rem;">⬇ Install</button>
       <button id="themeToggle">🌙 Dark</button>
     </div>
   </header>
