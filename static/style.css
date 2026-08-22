@@ -15,22 +15,24 @@
   --warn: #ffcf4d;
   --danger: #ff4d6d;
   --glow: 0 0 24px rgba(0, 240, 255, 0.25);
+  --grid-line: rgba(0, 240, 255, 0.035);
 }
 
 :root[data-theme="light"] {
-  --bg-0: #eef2fb;
-  --bg-1: #e2e8f7;
-  --glass: rgba(255, 255, 255, 0.55);
-  --glass-strong: rgba(255, 255, 255, 0.78);
-  --border: rgba(0, 130, 170, 0.3);
-  --text: #0b1220;
-  --text-dim: #4a5570;
-  --accent: #0090b0;
-  --accent-2: #c400a0;
-  --safe: #0aa15c;
-  --warn: #c98a00;
-  --danger: #d92e4d;
-  --glow: 0 0 24px rgba(0, 140, 180, 0.15);
+  --bg-0: #ffffff;
+  --bg-1: #f3f4f6;
+  --glass: rgba(255, 255, 255, 0.82);
+  --glass-strong: rgba(255, 255, 255, 0.96);
+  --border: rgba(0, 100, 140, 0.15);
+  --text: #111827;
+  --text-dim: #4b5563;
+  --accent: #0077a8;
+  --accent-2: #a000a0;
+  --safe: #059669;
+  --warn: #b45309;
+  --danger: #dc2626;
+  --glow: 0 2px 16px rgba(0, 100, 140, 0.10);
+  --grid-line: rgba(0, 100, 140, 0.05);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -48,15 +50,16 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* subtle tactical grid overlay */
+/* subtle tactical grid overlay — uses --grid-line so it adapts
+   correctly to both dark and light themes without hardcoded cyan */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(0, 240, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.035) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 42px 42px;
   z-index: -1;
 }
@@ -69,6 +72,11 @@ body::before {
   border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow: var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+/* Light mode: glass cards need a solid shadow instead of a glow
+   to stand out against the white background */
+:root[data-theme="light"] .glass {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 /* ---------- Header ---------- */
@@ -272,7 +280,11 @@ body.mode-disaster #threatTitle {
 /* ---------- 3. Disaster Mode — simplified view, dark base preserved ---------- */
 /* Background stays #0D1117 — only non-essential panels hide.
    stat values enlarge for at-a-glance readability under stress. */
-body.mode-disaster { --bg-0: #0D1117; --bg-1: #0D1117; }
+/* Disaster: keep the theme background but add a very subtle red tint
+   that still reads in both dark and light — using a semi-transparent
+   overlay instead of overriding the bg vars (which would break light mode) */
+body.mode-disaster { background-blend-mode: multiply; }
+body.mode-disaster::before { background-color: rgba(248, 81, 73, 0.04); }
 
 body.mode-disaster .stat-value {
   font-size: 2rem;
@@ -285,9 +297,11 @@ body.mode-disaster #compassCard .compass-body-secondary {
   display: none;
 }
 
-/* Cautionary and Nominal: no layout changes, full UI visible */
-body.mode-nominal  { --bg-0: #0D1117; --bg-1: #0b0f1a; }
-body.mode-cautionary { --bg-0: #0D1117; --bg-1: #0b0f1a; }
+/* Cautionary and Nominal: no layout or background changes.
+   Do NOT hardcode bg colors here — that would override the light theme
+   variables set on :root[data-theme="light"]. Let the theme vars win. */
+body.mode-nominal  { /* background governed by data-theme, not mode */ }
+body.mode-cautionary { /* background governed by data-theme, not mode */ }
 
 /* ---------- Compass ---------- */
 #compassCard { padding: 18px; margin-bottom: 18px; }
