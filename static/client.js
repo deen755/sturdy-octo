@@ -44,17 +44,37 @@ if ("serviceWorker" in navigator) {
 // ================================================================
 // 2. Theme toggle (dark tactical / light daylight)
 // ================================================================
+// syncThemeColor reads the active --bg-0 CSS variable from the root
+// element after the data-theme attribute is set, then writes that
+// exact color into the <meta name="theme-color"> tag. This syncs the
+// Android/iOS status bar to match the app background on every toggle
+// without hardcoding any color values here — the CSS variables are
+// the single source of truth.
+function syncThemeColor() {
+  const meta = document.getElementById("theme-meta");
+  if (!meta) return;
+  // getPropertyValue reads the resolved CSS variable value after the
+  // data-theme attribute has already been applied to :root.
+  const bg = getComputedStyle(document.documentElement)
+    .getPropertyValue("--bg-0")
+    .trim();
+  if (bg) meta.setAttribute("content", bg);
+}
+
 function initTheme() {
   const saved = localStorage.getItem("atmosync-theme") || "dark";
   document.documentElement.setAttribute("data-theme", saved);
   els.themeToggle.textContent = saved === "dark" ? "🌙 Dark" : "☀️ Light";
+  syncThemeColor();
 }
+
 els.themeToggle.addEventListener("click", () => {
   const current = document.documentElement.getAttribute("data-theme");
   const next = current === "dark" ? "light" : "dark";
   document.documentElement.setAttribute("data-theme", next);
   localStorage.setItem("atmosync-theme", next);
   els.themeToggle.textContent = next === "dark" ? "🌙 Dark" : "☀️ Light";
+  syncThemeColor();
 });
 initTheme();
 
